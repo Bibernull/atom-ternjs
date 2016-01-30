@@ -82,5 +82,12 @@
     "type": "boolean",
     "default": true,
     "order": 11
+  },
+  "snippetTypeHints": {
+    "title": "Complete type hints",
+    "description": "Insert snippet with function parameter hints just as displayed, or strip the types<br/>**Display:** method.apply(this: ?, args: [?])<br/>**Insert:** method.apply(this, args)",
+    "type": "boolean",
+    "default": true,
+    "order": 12
   }
 }

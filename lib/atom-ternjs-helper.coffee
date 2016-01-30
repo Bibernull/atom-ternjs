@@ -169,11 +169,16 @@ module.exports = class Helper
 
   buildSnippet: (params, name) ->
     return "#{name}()" if params.length is 0
+    snippetTypeHints = @manager.packageConfig.options.snippetTypeHints
     suggestionParams = []
     for param, i in params
       param = param.replace '}', '\\}'
+      param = @stripType param unless snippetTypeHints
       suggestionParams.push "${#{i + 1}:#{param}}"
     "#{name}(#{suggestionParams.join(',')})"
+
+  stripType: (param) ->
+    param.slice 0, param.indexOf(':', 0)
 
   extractParams: (type) ->
     return [] unless type
