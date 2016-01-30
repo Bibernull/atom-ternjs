@@ -17,14 +17,22 @@ class Type
     atom.views.getView(atom.workspace).appendChild(@view)
 
   setPosition: ->
+    propsMarker = {
+      type: 'overlay',
+      item: @view,
+      class: 'atom-ternjs-type',
+      position: 'tale',
+      invalidate: 'touch'
+    }
+
     if !@marker
       editor = atom.workspace.getActiveTextEditor()
       return unless editor
       @marker = editor.getLastCursor?().getMarker()
       return unless @marker
-      @overlayDecoration = editor.decorateMarker(@marker, {type: 'overlay', item: @view, class: 'atom-ternjs-type', position: 'tale', invalidate: 'touch'})
+      @overlayDecoration = editor.decorateMarker(@marker, propsMarker)
     else
-      @marker.setProperties({type: 'overlay', item: @view, class: 'atom-ternjs-type', position: 'tale', invalidate: 'touch'})
+      @marker.setProperties(propsMarker)
 
   destroyOverlay: ->
     @overlayDecoration?.destroy()
@@ -59,9 +67,10 @@ class Type
     paramPosition = 0
     cancel = false
 
-    buffer.backwardsScanInRange(/\]|\[|\(|\)|\,|\{|\}/g, [[rowStart, 0], [position.row, position.column]], (obj) =>
-
-      return if editor.scopeDescriptorForBufferPosition(obj.range.start).scopes.join().match(/string/)
+    buffer.backwardsScanInRange(/\]|\[|\(|\)|\,|\{|\}/g, [[rowStart, 0],
+    [position.row, position.column]], (obj) ->
+      scopeDescriptor = editor.scopeDescriptorForBufferPosition(obj.range.start)
+      return if scopeDescriptor.scopes.join().match(/string/)
 
       if obj.matchText is '}'
         may++
@@ -95,7 +104,8 @@ class Type
         skipCounter++
         return
 
-      if obj.matchText is ',' and not skipCounter and not skipCounter2 and not may and not may2
+      if obj.matchText is ',' and not skipCounter\
+      and not skipCounter2 and not may and not may2
         paramPosition++
         return
 
@@ -121,7 +131,8 @@ class Type
       @destroyOverlay()
       return
 
-    text = buffer.getTextInRange([[rangeBefore.start.row, 0], [rangeBefore.start.row, rangeBefore.start.column]])
+    text = buffer.getTextInRange([[rangeBefore.start.row, 0],
+    [rangeBefore.start.row, rangeBefore.start.column]])
 
     @manager.client.update(editor).then (data) =>
       return if data.isQueried
@@ -134,7 +145,9 @@ class Type
         @manager.helper.formatType(data)
         if params?[paramPosition]
           offsetFix = if paramPosition > 0 then ' ' else ''
-          data.type = data.type.replace(params[paramPosition], offsetFix + "<span class=\"current-param\">#{params[paramPosition]}</span>")
+          data.type = data.type.replace(params[paramPosition],
+          offsetFix + \
+          "<span class=\"current-param\">#{params[paramPosition]}</span>")
         @view.setData({label: data.type})
         @setPosition()
 

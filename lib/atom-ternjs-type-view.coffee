@@ -24,4 +24,5 @@ class TypeView extends HTMLElement
   destroy: ->
     @remove()
 
-module.exports = document.registerElement('atom-ternjs-type', prototype: TypeView.prototype)
+module.exports = document.registerElement('atom-ternjs-type',
+prototype: TypeView.prototype)

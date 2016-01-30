@@ -2,8 +2,7 @@ fs = require 'fs'
 path = require 'path'
 _ = require 'underscore-plus'
 
-module.exports =
-class Helper
+module.exports = class Helper
 
   projectRoot: null
   manager: null
@@ -31,11 +30,12 @@ class Helper
   updateTernFile: (content, restartServer) ->
     @projectRoot = @manager.server?.projectDir
     return unless @projectRoot
-    @writeFile(path.resolve(__dirname, @projectRoot + '/.tern-project'), content, restartServer)
+    ternFilePath = path.resolve(__dirname, @projectRoot + '/.tern-project')
+    @writeFile(ternFilePath, content, restartServer)
 
   fileExists: (path) ->
-    try fs.accessSync path, fs.F_OK, (err) =>
-      console.log err
+    try fs.accessSync path, fs.F_OK, (err) ->
+      # console.log err
     catch e then return false
 
   isDirectory: (dir) ->
@@ -48,7 +48,8 @@ class Helper
       if !err and restartServer
         @manager.restartServer()
       return unless err
-      message = 'Could not create/update .tern-project file. Use the README to manually create a .tern-project file.'
+      message = 'Could not create/update .tern-project file.\
+        Use the README to manually create a .tern-project file.'
       atom.notifications.addInfo(message, dismissable: true)
 
   readFile: (path) ->
@@ -66,7 +67,8 @@ class Helper
   markerCheckpointBack: ->
     return unless @checkpointsDefinition.length
     checkpoint = @checkpointsDefinition.pop()
-    @openFileAndGoToPosition(checkpoint.marker.getRange().start, checkpoint.editor.getURI())
+    start = checkpoint.marker.getRange().start
+    @openFileAndGoToPosition(start, checkpoint.editor.getURI())
 
   setMarkerCheckpoint: ->
     editor = atom.workspace.getActiveTextEditor()
@@ -134,12 +136,16 @@ class Helper
 
     if obj.rightLabel.startsWith('fn')
       params = @extractParams(obj.rightLabel)
-      if @manager.packageConfig.options.useSnippets || @manager.packageConfig.options.useSnippetsAndFunction
+      unless @manager.packageConfig.options.useSnippetsAndFunction
+        obj._displayText = @buildDisplayText(params, obj.name)
+      if @manager.packageConfig.options.useSnippets
         obj._snippet = @buildSnippet(params, obj.name)
         obj._hasParams = if params.length then true else false
       else
-        obj._snippet = if params.length then "#{obj.name}(${#{0}:#{}})" else "#{obj.name}()"
-        obj._displayText = @buildDisplayText(params, obj.name)
+        obj._snippet = if params.length
+          "#{obj.name}(${#{0}:#{}})"
+        else
+          "#{obj.name}()"
       obj._typeSelf = 'function'
 
     if obj.name
@@ -196,10 +202,20 @@ class Helper
   markDefinitionBufferRange: (cursor, editor) ->
     range = cursor.getCurrentWordBufferRange()
     marker = editor.markBufferRange(range, {invalidate: 'touch'})
+    propsMarker = {
+      type: 'highlight',
+      class: 'atom-ternjs-definition-marker',
+      invalidate: 'touch'
+    }
+    propsMarkerActive = {
+      type: 'highlight',
+      class: 'atom-ternjs-definition-marker active',
+      invalidate: 'touch'
+    }
 
-    decoration = editor.decorateMarker(marker, type: 'highlight', class: 'atom-ternjs-definition-marker', invalidate: 'touch')
-    setTimeout (-> decoration?.setProperties(type: 'highlight', class: 'atom-ternjs-definition-marker active', invalidate: 'touch')), 1
-    setTimeout (-> decoration?.setProperties(type: 'highlight', class: 'atom-ternjs-definition-marker', invalidate: 'touch')), 1501
+    decoration = editor.decorateMarker(marker, propsMarker)
+    setTimeout (-> decoration?.setProperties(propsMarkerActive)), 1
+    setTimeout (-> decoration?.setProperties(propsMarker)), 1501
     setTimeout (-> marker.destroy()), 2500
 
   focusEditor: ->

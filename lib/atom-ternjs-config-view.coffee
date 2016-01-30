@@ -34,7 +34,9 @@ class ConfigView extends HTMLElement
     header = document.createElement('h2')
     header.innerHTML = 'plugins'
     text = document.createElement('p')
-    text.innerHTML = 'This section isn\'t implemented yet.<br />Please add plugins manually by editing your .tern-project file located in your root-path.'
+    text.innerHTML = 'This section isn\'t implemented yet.\
+      <br />Please add plugins manually by editing your\
+      .tern-project file located in your root-path.'
     wrapper.appendChild(header)
     wrapper.appendChild(text)
 
@@ -89,7 +91,8 @@ class ConfigView extends HTMLElement
     add.classList.add('icon')
     add.classList.add('icon-diff-added')
     add.addEventListener('click', (e) =>
-      e.target.closest('section').appendChild(@createInputWrapper(null, section))
+      inputWrapper = @createInputWrapper(null, section)
+      e.target.closest('section').appendChild(inputWrapper)
     , false)
     add
 
@@ -109,7 +112,14 @@ class ConfigView extends HTMLElement
     doc.innerHTML = @getModel().config.docs[section].doc
     wrapper.appendChild(header)
     wrapper.appendChild(doc)
-    for key in Object.keys(@getModel().config.ecmaVersions)
+    onRadioChange = (e) =>
+      ecmaVersions = @getModel().config.ecmaVersions
+      for key of ecmaVersions
+        ecmaVersions[key] = false
+        ecmaVersions[e.target.__ternjs_key] = e.target.checked
+
+    ecmaVersions = @getModel().config.ecmaVersions
+    for key of ecmaVersions
       inputWrapper = document.createElement('div')
       inputWrapper.classList.add('input-wrapper')
       label = document.createElement('span')
@@ -117,13 +127,9 @@ class ConfigView extends HTMLElement
       radio = document.createElement('input')
       radio.type = 'radio'
       radio.name = 'ecmaVersions'
-      radio.checked = @getModel().config.ecmaVersions[key]
+      radio.checked = ecmaVersions[key]
       radio.__ternjs_key = key
-      radio.addEventListener('change', (e) =>
-        for key in Object.keys(@getModel().config.ecmaVersions)
-          @getModel().config.ecmaVersions[key] = false
-        @getModel().config.ecmaVersions[e.target.__ternjs_key] = e.target.checked
-      , false)
+      radio.addEventListener('change', onRadioChange, false)
       inputWrapper.appendChild(label)
       inputWrapper.appendChild(radio)
       wrapper.appendChild(inputWrapper)
@@ -135,17 +141,23 @@ class ConfigView extends HTMLElement
     header = document.createElement('h2')
     header.innerHTML = section
     wrapper.appendChild(header)
-    for key in Object.keys(@getModel().config.libs)
+
+    modelValue = @getModel().config[section]
+    unless typeof modelValue is 'object'
+      modelValue = {}
+      modelValue[section] = {}
+
+    for key in Object.keys(modelValue)
       inputWrapper = document.createElement('div')
       inputWrapper.classList.add('input-wrapper')
       label = document.createElement('span')
       label.innerHTML = key
       checkbox = document.createElement('input')
       checkbox.type = 'checkbox'
-      checkbox.checked = @getModel().config.libs[key]
+      checkbox.checked = modelValue[key]
       checkbox.__ternjs_key = key
       checkbox.addEventListener('change', (e) =>
-        @getModel().config.libs[e.target.__ternjs_key] = e.target.checked
+        @getModel().config[section][e.target.__ternjs_key] = e.target.checked
       , false)
       inputWrapper.appendChild(label)
       inputWrapper.appendChild(checkbox)
@@ -170,4 +182,5 @@ class ConfigView extends HTMLElement
   setModel: (model) ->
     @model = model
 
-module.exports = document.registerElement('atom-ternjs-config', prototype: ConfigView.prototype)
+module.exports = document.registerElement('atom-ternjs-config',
+prototype: ConfigView.prototype)

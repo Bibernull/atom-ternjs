@@ -47,7 +47,8 @@ class Client
     # check if the file is registered, else return
     @files().then (data) =>
       registered = data.files.indexOf(file) > -1
-      return Promise.resolve({}) if _editor and _editor.diffs.length is 0 and registered
+      if _editor and _editor.diffs.length is 0 and registered
+        return Promise.resolve({})
       _editor?.diffs = []
       promise = @post('query', files: [
           type: 'full'
@@ -65,7 +66,9 @@ class Client
     #   for diff in _editor.diffs
     #     start = Math.max(0, diff.oldRange.start.row - 50)
     #     end = Math.min(buffer.getLineCount(), diff.oldRange.end.row + 20)
-    #   text = buffer.getTextInRange([[start, 0], [end, buffer.lineLengthForRow(end)]])
+    #
+    #   text = buffer.getTextInRange([[start, 0],
+    #     [end, buffer.lineLengthForRow(end)]])
     # if (false)
       # @post(JSON.stringify
       #   files: [
@@ -128,7 +131,7 @@ class Client
   files: ->
     @post('query', query:
       type: 'files'
-    ).then (data) =>
+    ).then (data) ->
       data
 
   post: (type, data) ->
